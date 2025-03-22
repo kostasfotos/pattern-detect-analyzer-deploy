@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres-container
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    networks:
+      - my-network
+
+  springboot-app:
+    image: kostasfotos/pattern-detect-analyzer:latest
+    container_name: pattern-detect-analyzer
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      python.server.url: http://python-server:5000
+    depends_on:
+      - postgres
+      - python-server
+    networks:
+      - my-network
+
+  python-server:
+    image: kostasfotos/pattern-detect-python-server:latest
+    container_name: python-server-container
+    ports:
+      - "5000:5000"
+    networks:
+      - my-network
+
+  react-ui:
+    image: kostasfotos/pattern-detect-ui:latest
+    container_name: pattern-detect-ui
+    ports:
+      - "3000:80"
+    networks:
+      - my-network
+
+networks:
+  my-network:
+    driver: bridge
